@@ -51,7 +51,7 @@ jobs:
         
     - name: Upload results as artifact
       if: ${{ github.event.inputs.output_artifact == 'true' }}
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: commit-graph-results-${{ github.event.inputs.since_date }}
         path: commit-graph-output/
