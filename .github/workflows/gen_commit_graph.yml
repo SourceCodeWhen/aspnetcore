@@ -13,10 +13,16 @@ jobs:
   git-sim-graph:
     runs-on: ubuntu-latest
     steps:
+    
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0 # ensure all commits/branches are available
+          
+      - name: Install system dependencies for git-sim/manim
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libpangocairo-1.0-0 libpango1.0-dev libcairo2-dev pkg-config python3-dev
 
       - name: Set up Python
         uses: actions/setup-python@v5
