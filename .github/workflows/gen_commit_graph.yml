@@ -31,7 +31,33 @@ jobs:
 
       - name: Generate commit graph SVG
         run: |
-          .github/workflows/generate_commit_graph.sh . commit-graph.svg "${{ github.event.inputs.since_date }}"
+          # set -e
+          
+          # Parameters
+          REPO_PATH=.
+          
+          # Install Rust if not present
+          if ! command -v cargo >/dev/null; then
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+            export PATH="$HOME/.cargo/bin:$PATH"
+          fi
+          
+          # Install git-graph
+          if ! command -v git-graph >/dev/null; then
+            cargo install git-graph
+          fi
+          
+          cd "$REPO_PATH"
+          
+          # Build git-graph arguments
+          args=("--svg" "-o" "commit-graph.svg" --show-authors" "--show-branches" "--show-merges" "--show-dates" "--width" "2048")
+          if [[ -n "${{ github.event.inputs.since_date }}" ]]; then
+            args+=("--since" "${{ github.event.inputs.since_date }}")
+          fi
+          
+          # Generate SVG graph
+          git-graph "${args[@]}"
+          echo "Generated commit-graph.svg"
 
       - name: Upload SVG as artifact
         uses: actions/upload-artifact@v4
