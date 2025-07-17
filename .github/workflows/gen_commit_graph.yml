@@ -1,66 +1,46 @@
-name: Generate Commit Graph (git-graph SVG)
+name: Generate Commit Graph (git-sim)
 
 on:
   workflow_dispatch:
     inputs:
-      since_date:
-        description: 'Start date (e.g. 2024-01-01) for included commits'
+      commit_count:
+        description: 'Number of recent commits per branch (default: 25, "all" for all commits)'
         required: false
-        default: ''
+        default: '25'
         type: string
 
 jobs:
-  generate-graph:
+  git-sim-graph:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0 # ensure all commits/branches are available
 
-      - name: Set up Rust
-        uses: actions-rs/toolchain@v1
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          profile: minimal
-          toolchain: stable
-          override: true
+          python-version: '3.11'
 
-      - name: Install git-graph
-        run: cargo install git-graph
-
-      - name: Generate commit graph SVG
+      - name: Install git-sim dependencies
         run: |
-          # set -e
-          
-          # Parameters
-          REPO_PATH=.
-          
-          # Install Rust if not present
-          if ! command -v cargo >/dev/null; then
-            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-            export PATH="$HOME/.cargo/bin:$PATH"
-          fi
-          
-          # Install git-graph
-          if ! command -v git-graph >/dev/null; then
-            cargo install git-graph
-          fi
-          
-          cd "$REPO_PATH"
-          
-          # Build git-graph arguments
-          args=("--svg" "-o" "commit-graph.svg" "--show-authors" "--show-branches" "--show-merges" "--show-dates" "--width" "2048")
-          if [[ -n "${{ github.event.inputs.since_date }}" ]]; then
-            args+=("--since" "${{ github.event.inputs.since_date }}")
-          fi
-          
-          # Generate SVG graph
-          git-graph "${args[@]}"
-          echo "Generated commit-graph.svg"
+          python -m pip install --upgrade pip
+          pip install git-sim
 
-      - name: Upload SVG as artifact
+      - name: Generate git commit graph image with git-sim
+        run: |
+          # Default output is PNG, editable via -o argument
+          # Show all branches; commit count is configurable
+          if [ "${{ github.event.inputs.commit_count }}" = "all" ]; then
+            git-sim log --all -o commit-graph.png
+          else
+            git-sim log --all -n "${{ github.event.inputs.commit_count }}" -o commit-graph.png
+          fi
+          echo "Generated commit-graph.png"
+
+      - name: Upload commit graph PNG as artifact
         uses: actions/upload-artifact@v4
         with:
           name: commit-graph
-          path: commit-graph.svg
+          path: commit-graph.png
