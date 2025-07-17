@@ -50,7 +50,7 @@ jobs:
           cd "$REPO_PATH"
           
           # Build git-graph arguments
-          args=("--svg" "-o" "commit-graph.svg" --show-authors" "--show-branches" "--show-merges" "--show-dates" "--width" "2048")
+          args=("--svg" "-o" "commit-graph.svg" "--show-authors" "--show-branches" "--show-merges" "--show-dates" "--width" "2048")
           if [[ -n "${{ github.event.inputs.since_date }}" ]]; then
             args+=("--since" "${{ github.event.inputs.since_date }}")
           fi
