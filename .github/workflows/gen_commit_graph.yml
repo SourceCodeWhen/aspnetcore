@@ -39,9 +39,9 @@ jobs:
           # Default output is PNG, editable via -o argument
           # Show all branches; commit count is configurable
           if [ "${{ github.event.inputs.commit_count }}" = "all" ]; then
-            git-sim log --all -o commit-graph.png
+            git-sim log --all
           else
-            git-sim log --all -n "${{ github.event.inputs.commit_count }}" -o commit-graph.png
+            git-sim log --all -n "${{ github.event.inputs.commit_count }}"
           fi
           echo "Generated commit-graph.png"
 
@@ -49,4 +49,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: commit-graph
-          path: commit-graph.png
+          path: git-sim_media
+          retention-days: 7
