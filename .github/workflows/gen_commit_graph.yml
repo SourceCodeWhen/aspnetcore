@@ -1,67 +1,40 @@
-name: Generate Git Commit Graph
+name: Generate Commit Graph (git-graph SVG)
 
 on:
   workflow_dispatch:
     inputs:
       since_date:
-        description: 'Start date for commit collection (YYYY-MM-DD)'
-        required: true
-        default: '2024-01-01'
-        type: string
-      output_artifact:
-        description: 'Create downloadable artifact with results'
+        description: 'Start date (e.g. 2024-01-01) for included commits'
         required: false
-        default: true
-        type: boolean
+        default: ''
+        type: string
 
 jobs:
-  generate-commit-graph:
+  generate-graph:
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0  # Fetch all history for all branches
-        
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.9'
-        
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install GitPython matplotlib networkx numpy
-        
-    - name: Create output directory
-      run: mkdir -p commit-graph-output
-      
-    - name: Generate commit graph
-      run: |
-        python .github/workflows/git_commit_graph.py \
-          --since "${{ github.event.inputs.since_date }}" \
-          --repo-path . \
-          --output-dir commit-graph-output
-      
-    - name: List generated files
-      run: |
-        echo "Generated files:"
-        ls -la commit-graph-output/
-        
-    - name: Upload results as artifact
-      if: ${{ github.event.inputs.output_artifact == 'true' }}
-      uses: actions/upload-artifact@v4
-      with:
-        name: commit-graph-results-${{ github.event.inputs.since_date }}
-        path: commit-graph-output/
-        retention-days: 30
-        
-    - name: Display summary
-      run: |
-        if [ -f commit-graph-output/commit_summary.json ]; then
-          echo "## Commit Summary" >> $GITHUB_STEP_SUMMARY
-          echo '```
-          cat commit-graph-output/commit_summary.json >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-        fi
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+
+      - name: Install git-graph
+        run: cargo install git-graph
+
+      - name: Generate commit graph SVG
+        run: |
+          ./generate_commit_graph.sh . commit-graph.svg "${{ github.event.inputs.since_date }}"
+
+      - name: Upload SVG as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: commit-graph
+          path: commit-graph.svg
