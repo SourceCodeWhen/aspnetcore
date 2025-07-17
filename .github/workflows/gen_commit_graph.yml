@@ -39,7 +39,7 @@ jobs:
       
     - name: Generate commit graph
       run: |
-        python git_commit_graph.py \
+        python .github/workflows/git_commit_graph.py \
           --since "${{ github.event.inputs.since_date }}" \
           --repo-path . \
           --output-dir commit-graph-output
